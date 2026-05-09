@@ -7,6 +7,7 @@ DEFAULT_CONFIG = {
     "template": "{name}_¥{amount}{ext}",
     "dry_run": False,
     "last_directory": "",
+    "processed_files": {},
 }
 
 

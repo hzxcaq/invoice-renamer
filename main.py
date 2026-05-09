@@ -132,21 +132,44 @@ class InvoiceRenamerApp:
             messagebox.showinfo("提示", "该目录下未找到 PDF 文件")
             return
 
+        # 过滤已处理的文件
+        processed_files = self.cfg.get("processed_files", {})
+        unprocessed_files = []
+        skipped_count = 0
+        for pdf_path in pdf_files:
+            file_key = os.path.abspath(pdf_path)
+            mtime = str(os.path.getmtime(pdf_path))
+            if file_key in processed_files and processed_files[file_key] == mtime:
+                skipped_count += 1
+            else:
+                unprocessed_files.append(pdf_path)
+
+        if skipped_count > 0:
+            messagebox.showinfo("提示", f"跳过 {skipped_count} 个已处理的文件")
+
+        if not unprocessed_files:
+            messagebox.showinfo("提示", "所有文件都已处理过")
+            return
+
         self.btn_start.configure(state="disabled")
-        self.progress["maximum"] = len(pdf_files)
+        self.progress["maximum"] = len(unprocessed_files)
         self.progress["value"] = 0
-        self.var_status.set(f"处理中... 0/{len(pdf_files)}")
+        self.var_status.set(f"处理中... 0/{len(unprocessed_files)}")
 
         threading.Thread(
-            target=self._process_files, args=(pdf_files, template, dry_run), daemon=True
+            target=self._process_files, args=(unprocessed_files, template, dry_run), daemon=True
         ).start()
 
     def _process_files(self, pdf_files: list[str], template: str, dry_run: bool):
         try:
             success = fail = skip = 0
+            processed_files = self.cfg.get("processed_files", {})
 
             for i, pdf_path in enumerate(pdf_files):
                 filename = os.path.basename(pdf_path)
+                # 在重命名之前获取文件的 mtime
+                file_mtime = str(os.path.getmtime(pdf_path))
+
                 try:
                     fields = extract_invoice_data(pdf_path)
                 except Exception as e:
@@ -168,11 +191,23 @@ class InvoiceRenamerApp:
                         amount_display = fields["amount"]
                         row = {"原文件名": filename, "新文件名": new_name, "状态": status, "说明": f"¥{amount_display}"}
                         success += 1
+                        # 记录已处理的文件（仅在非试运行模式下）
+                        if not dry_run:
+                            # 使用重命名后的文件路径
+                            directory = os.path.dirname(pdf_path)
+                            new_path = os.path.join(directory, new_name)
+                            file_key = os.path.abspath(new_path)
+                            processed_files[file_key] = file_mtime
                     else:
                         row = {"原文件名": filename, "新文件名": filename, "状态": "失败", "说明": rename_err}
                         fail += 1
 
                 self.root.after(0, self._on_file_processed, row, i + 1)
+
+            # 保存已处理文件记录
+            if not dry_run and processed_files:
+                self.cfg["processed_files"] = processed_files
+                save_config(self.cfg)
 
             mode_text = "试运行" if dry_run else "完成"
             summary = f"{mode_text} | 成功: {success}  失败: {fail}  跳过: {skip}  共: {len(pdf_files)}"
