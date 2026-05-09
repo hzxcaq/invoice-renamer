@@ -37,14 +37,23 @@ class InvoiceRenamerApp:
 
         ttk.Label(frame_cfg, text="命名规则:").grid(row=0, column=0, sticky=tk.W)
         self.var_template = tk.StringVar(value=self.cfg.get("template", DEFAULT_TEMPLATE))
-        entry_tpl = ttk.Entry(frame_cfg, textvariable=self.var_template, width=60)
-        entry_tpl.grid(row=0, column=1, sticky=tk.EW, padx=(5, 0))
+        self.entry_tpl = ttk.Entry(frame_cfg, textvariable=self.var_template, width=60)
+        self.entry_tpl.grid(row=0, column=1, sticky=tk.EW, padx=(5, 0))
 
-        # 可用字段提示
-        fields_hint = "  ".join(f"{{{k}}}" for k in FIELD_DEFINITIONS)
-        ttk.Label(frame_cfg, text=f"可用字段: {fields_hint}", wraplength=800).grid(
-            row=1, column=0, columnspan=2, sticky=tk.W, pady=(3, 0)
-        )
+        # 可点击字段按钮
+        frame_fields = ttk.Frame(frame_cfg)
+        frame_fields.grid(row=1, column=0, columnspan=2, sticky=tk.W, pady=(3, 0))
+        ttk.Label(frame_fields, text="点击插入字段:").pack(side=tk.LEFT)
+        for field_key, field_desc in FIELD_DEFINITIONS.items():
+            btn = ttk.Button(
+                frame_fields,
+                text=f"{{{field_key}}}",
+                command=lambda k=field_key: self._insert_field(k),
+                width=12,
+            )
+            btn.pack(side=tk.LEFT, padx=2)
+
+        # 字段说明
         desc_text = "  |  ".join(f"{k}: {v}" for k, v in FIELD_DEFINITIONS.items())
         ttk.Label(frame_cfg, text=desc_text, wraplength=800, foreground="gray").grid(
             row=2, column=0, columnspan=2, sticky=tk.W, pady=(2, 0)
@@ -89,6 +98,15 @@ class InvoiceRenamerApp:
         self.tree.configure(yscrollcommand=scrollbar.set)
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+    def _insert_field(self, field_key: str):
+        """在光标位置插入字段占位符。"""
+        field_text = f"{{{field_key}}}"
+        try:
+            cursor_pos = self.entry_tpl.index(tk.INSERT)
+            self.entry_tpl.insert(cursor_pos, field_text)
+        except tk.TclError:
+            self.var_template.set(self.var_template.get() + field_text)
 
     def _choose_dir(self):
         initial = self.var_dir.get() or ""
