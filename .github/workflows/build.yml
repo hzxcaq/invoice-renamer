@@ -21,10 +21,10 @@ jobs:
         run: pip install pdfplumber pyinstaller
 
       - name: Build exe
-        run: pyinstaller --onefile --windowed --name "发票金额重命名工具" main.py
+        run: pyinstaller --onefile --windowed --name invoice-renamer main.py
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/发票金额重命名工具.exe
+          files: dist/invoice-renamer.exe
           generate_release_notes: true
