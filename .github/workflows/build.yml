@@ -2,12 +2,14 @@ name: Build Windows EXE
 
 on:
   push:
-    branches: [master]
+    tags: ["v*"]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -21,8 +23,8 @@ jobs:
       - name: Build exe
         run: pyinstaller --onefile --windowed --name "发票金额重命名工具" main.py
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: 发票金额重命名工具
-          path: dist/发票金额重命名工具.exe
+          files: dist/发票金额重命名工具.exe
+          generate_release_notes: true
