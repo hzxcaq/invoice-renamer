@@ -23,9 +23,9 @@ _PATTERNS = {
     "inv_date": re.compile(r'开票日期[：:]\s*([\d年月日]+)'),
     "buyer":    re.compile(r'买\s*方.*?名称[：:]\s*(.+?)(?:\s+统|$)', re.DOTALL),
     "seller":   re.compile(r'售\s*方.*?名称[：:]\s*(.+?)(?:\s+统|$)', re.DOTALL),
-    "amount":   re.compile(r'（小写）\s*¥\s*([\d,]+\.?\d*)|\(小写\)\s*¥\s*([\d,]+\.?\d*)'),
-    "tax":      re.compile(r'合\s*计\s+¥[\d,.]+\s+¥([\d,.]+)'),
-    "subtotal": re.compile(r'合\s*计\s+¥([\d,.]+)'),
+    "amount":   re.compile(r'[（(]小写[）)]\s*[¥￥]\s*([\d,]+\.?\d*)'),
+    "tax":      re.compile(r'合\s*计\s+[¥￥][\d,.]+\s+[¥￥]([\d,.]+)'),
+    "subtotal": re.compile(r'合\s*计\s+[¥￥]([\d,.]+)'),
     "drawer":   re.compile(r'开票人[：:]\s*(\S+)'),
     "item":     re.compile(r'\*([^*]+)\*'),
 }

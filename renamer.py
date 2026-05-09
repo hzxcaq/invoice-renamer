@@ -8,6 +8,7 @@ def build_new_filename(original_name: str, fields: dict, template: str = DEFAULT
 
     fields 中的键对应模板中的 {key} 占位符。
     原文件名的 name 和 ext 自动补充。
+    如果模板中不包含 {ext}，自动保留原文件扩展名。
     """
     base, ext = os.path.splitext(original_name)
     # fields 中的 None 值不覆盖默认值
@@ -17,6 +18,11 @@ def build_new_filename(original_name: str, fields: dict, template: str = DEFAULT
     result = template
     for key, val in merged.items():
         result = result.replace(f"{{{key}}}", str(val) if val else "")
+
+    # 如果模板中不包含 {ext}，自动保留原文件扩展名
+    if "{ext}" not in template and not result.endswith(ext):
+        result += ext
+
     return result
 
 
